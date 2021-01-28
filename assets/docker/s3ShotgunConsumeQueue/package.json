@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "aws-sdk": "^2.825.0",
+    "sqs-consumer": "^5.5.0"
+  },
+  "name": "consumesqsqueue"
+}

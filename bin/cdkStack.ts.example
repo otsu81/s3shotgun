@@ -1,0 +1,10 @@
+import 'source-map-support/register';
+import cdk = require('@aws-cdk/core');
+import { s3Shotgun } from '../lib/s3Shotgun';
+
+process.env.TARGET_BUCKET = 'my-target-bucket';
+const env = {account: '123456789012', region: 'eu-west-1'}
+
+const app = new cdk.App();
+new s3Shotgun(app, 's3Shotgun', {env: env});
+app.synth();
