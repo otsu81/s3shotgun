@@ -2,6 +2,11 @@ import 'source-map-support/register';
 import cdk = require('@aws-cdk/core');
 import { s3Shotgun } from '../lib/s3Shotgun';
 
+// the max depth specifies how deep in the tree the S3 indexer will go before returning a path
+// deeper means more sub-directory paths, default is 6 which is intended for Cloudtrail log structure
+// example: MAXDEPTH 6 will go as far as s3://[bucketname]/AWSLogs/[org-id]/[accountId]/Cloudtrail/[region]/
+process.env.MAXDEPTH = '6'
+
 process.env.TARGET_BUCKET = 'my-target-bucket';
 const env = {account: '123456789012', region: 'eu-west-1'}
 

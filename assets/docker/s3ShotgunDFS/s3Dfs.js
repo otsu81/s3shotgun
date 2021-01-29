@@ -2,7 +2,7 @@ const aws = require('aws-sdk');
 const getPaginatedResults = require('./paginator')
 
 const s3 = new aws.S3({region: 'eu-west-1'});
-const MAXDEPTH = 6;
+const MAXDEPTH = parseInt(process.env.MAXDEPTH);
 
 const sendPathsToQueue = async(params) => {
     const sqs = new aws.SQS();
