@@ -9,6 +9,7 @@ import { Duration } from '@aws-cdk/core';
 import { ManagedPolicy, Role, ServicePrincipal } from '@aws-cdk/aws-iam';
 import { Rule, RuleTargetInput, Schedule } from '@aws-cdk/aws-events';
 import { RetentionDays } from '@aws-cdk/aws-logs';
+import { GatewayVpcEndpointAwsService } from '@aws-cdk/aws-ec2';
 
 export class s3Shotgun extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -27,6 +28,10 @@ export class s3Shotgun extends cdk.Stack {
       ]
     });
 
+    vpc.addGatewayEndpoint('s3endpoint', {
+      service: GatewayVpcEndpointAwsService.S3
+    })
+
     // IAM roles
     const taskRole = new Role(this, 's3ShotgunTaskRole', {
       assumedBy: new ServicePrincipal('ecs-tasks.amazonaws.com'),
@@ -41,8 +46,6 @@ export class s3Shotgun extends cdk.Stack {
       assumedBy: new ServicePrincipal('ecs-tasks.amazonaws.com'),
       roleName: 's3ShotgunExecutionRole',
       managedPolicies: [
-        // ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy'),
-        // ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess')
         ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')
       ]
     });
@@ -51,8 +54,6 @@ export class s3Shotgun extends cdk.Stack {
       assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
       roleName: 's3ShotgunLambdaRole',
       managedPolicies: [
-        // ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy'),
-        // ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess')
         ManagedPolicy.fromAwsManagedPolicyName('AmazonSQSFullAccess'),
         ManagedPolicy.fromAwsManagedPolicyName('AmazonECS_FullAccess'),
         ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')

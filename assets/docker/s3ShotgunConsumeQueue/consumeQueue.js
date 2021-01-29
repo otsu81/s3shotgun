@@ -8,8 +8,8 @@ const DEBUG = false;
 
 
 const cliS3Operation = async(params) => {
-    let s3cmd = `aws s3 ${params.S3Operation} s3://${params.SourceBucket}/${params.Path} s3://${params.TargetBucket}/${params.Path} --acl bucket-owner-full-control --storage-class ${STORAGE_CLASS} --cli-connect-timeout 0`;
     // give target bucket account ownership with --acl bucket-owner-full-control
+    let s3cmd = `aws s3 ${params.S3Operation} s3://${params.SourceBucket}/${params.Path} s3://${params.TargetBucket}/${params.Path} --acl bucket-owner-full-control --storage-class ${STORAGE_CLASS} --cli-connect-timeout 0`;
     let p = util.promisify(exec);
     let result = await p(s3cmd);
     if (DEBUG) console.log(result.stdout);
