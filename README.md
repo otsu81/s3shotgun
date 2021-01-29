@@ -14,7 +14,7 @@ Specifically, for the pre-coded CLI command, S3 shotgun launches Fargate spot ta
 * WRITE permissions in the target S3 bucket
 
 Once requirements are satisfied:
-1. Copy, rename, and modify `bin/cdkStack.ts.example` to fit your environment. You **MUST** replace:
+1. Copy, rename, and modify `bin/cdkStack.ts.example` to fit your environment. At minimum, you **MUST** replace:
 ```
 process.env.TARGET_BUCKET = 'my-target-bucket';
 const env = {account: '123456789012', region: 'eu-west-1'}
@@ -59,6 +59,8 @@ node assets/queuePusher/pushBucketsToQueue.js -q https://sqs.eu-west-1.amazonaws
 A lambda function continuously polls two SQS queues for messages. When a user puts a message in the bucket queue, Fargate will deploy a task indexing the contents of that S3 bucket. Each path to be either synced or copied will be sent to the Paths queue. The same lambda function will launch as many Fargate tasks as is possible/appropriate to carry out the sync and copy operation. All data transfer is done over S3 private link to maximize performance.
 
 ## Design choices
+* The indexing function uses a [DFS](https://en.wikipedia.org/wiki/Depth-first_search) to a specified depth to generate paths for directories and files, while discarding any path to a parent path to a child path (i.e. if we sync both s3://parent/child and s3://parent, the child path would be synced twice)
+* The `MAXDEPTH` parameter specifies how deep the DFS traverses. Default is 6, but you should change it according to your needs and bucket structure. Ideally as many files as possible should be using the `aws s3 sync` command, which is faster than just `aws s3 cp`. This means you don't want to "bottom out" in the DFS; if your maximum bucket depth is 3 set to 2. 6 is chosen since it suits Organization cloudtrail bucket structures.
 * ECS autoscaling can't scale down to zero. An easy workaround is to implement a lambda scaling function which is able to deploy new tasks.
 * Letting the tasks kill themselves graciously when the queue is empty means we don't have to worry about scaling down when the job is completed.
 * Ideally, you would run triggering events with SNS and Cloudwatch alarms to scale the tasks. But it has two caveats - Cloudwatch Alarms are more expensive than letting Lambda poll on a 1-minute schedule, and alarms do not fire during the alarm state, but only once when the threshold is reached (makes it hard to ramp up ECS tasks, which can only be added 10 at a time)
