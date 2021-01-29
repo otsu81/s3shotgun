@@ -72,7 +72,7 @@ A lambda function continuously polls two SQS queues for messages. When a user pu
 
 ## Why not S3 replication?
 * Requires version control enabled on all buckets
-* Always retain the metadata of objects
+* S3 replication always retains the metadata of objects
 * Can't perform transformation or operations on objects
 * Requires more permissions
 
@@ -82,4 +82,4 @@ A lambda function continuously polls two SQS queues for messages. When a user pu
 * IAM permissions are super permissive. They should probably be tightened.
 * Parameterize the task inputs
 * The CLI command can probably be generalized in a clever way.
-* Draw architecture diagram and explain how everything fits together
+* ~~Draw architecture diagram and explain how everything fits together~~
