@@ -59,9 +59,10 @@ node assets/queuePusher/pushBucketsToQueue.js -q https://sqs.eu-west-1.amazonaws
 A lambda function continuously polls two SQS queues for messages. When a user puts a message in the bucket queue, Fargate will deploy a task indexing the contents of that S3 bucket. Each path to be either synced or copied will be sent to the Paths queue. The same lambda function will launch as many Fargate tasks as is possible/appropriate to carry out the sync and copy operation. All data transfer is done over S3 private link to maximize performance.
 
 ## Design choices
-* ECS autoscaling can't scale down to zero. This makes it necessary to have a Lambda function to handle the scaling.
-* Ideally, you would run triggering events with SNS and Cloudwatch alarms to scale the tasks. But it has two caveats - Cloudwatch Alarms are more expensive than letting Lambda poll on a 1-minute schedule, and alarms don't fire for the duration of the alarm but only once (makes it hard to ramp up)
-* There is no native `s3 sync` functionality in the NodeJS SDK. A fairly simple workaround is to invoke the CLI from NodeJS. This also makes s3shotgun extensible; you can easily adopt the code to run arbitrary CLI commands.
+* ECS autoscaling can't scale down to zero. An easy workaround is to implement a lambda scaling function which is able to deploy new tasks.
+* Letting the tasks kill themselves graciously when the queue is empty means we don't have to worry about scaling down when the job is completed.
+* Ideally, you would run triggering events with SNS and Cloudwatch alarms to scale the tasks. But it has two caveats - Cloudwatch Alarms are more expensive than letting Lambda poll on a 1-minute schedule, and alarms do not fire during the alarm state, but only once when the threshold is reached (makes it hard to ramp up ECS tasks, which can only be added 10 at a time)
+* There is no native `s3 sync` functionality in the AWS NodeJS SDK. A fairly simple workaround is to invoke the CLI from NodeJS. This also makes s3shotgun extensible; you can easily adopt the code to run arbitrary CLI commands.
 
 ## Why not S3 Batch Operations?
 * S3BO requires the generation of manifests, which can take up to 48 hours per bucket. The long feedback loop can make it very frustrating to work with!
