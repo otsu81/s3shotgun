@@ -78,7 +78,7 @@ A lambda function continuously polls two SQS queues for messages. When a user pu
 * Can't perform transformation or operations on objects
 * Requires more permissions
 
-### Why not EMR S3DistCp?
+## Why not EMR S3DistCp?
 ![money](money.gif)
 
 ## TODO
