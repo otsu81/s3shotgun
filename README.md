@@ -55,12 +55,25 @@ node assets/queuePusher/pushBucketsToQueue.js -q https://sqs.eu-west-1.amazonaws
 # Architecture and design choices
 
 ![s3shotgun architecture](prettypicture.png)
+
+A lambda function continuously polls two SQS queues for messages. When a user puts a message in the bucket queue, Fargate will deploy a task indexing the contents of that S3 bucket. Each path to be either synced or copied will be sent to the Paths queue. The same lambda function will launch as many Fargate tasks as is possible/appropriate to carry out the sync and copy operation. All data transfer is done over S3 private link to maximize performance.
+
+## Design choices
+* ECS autoscaling can't scale down to zero. This makes it necessary to have a Lambda function to handle the scaling.
+* Ideally, you would run triggering events with SNS and Cloudwatch alarms to scale the tasks. But it has two caveats - Cloudwatch Alarms are more expensive than letting Lambda poll on a 1-minute schedule, and alarms don't fire for the duration of the alarm but only once (makes it hard to ramp up)
+* There is no native `s3 sync` functionality in the NodeJS SDK. A fairly simple workaround is to invoke the CLI from NodeJS. This also makes s3shotgun extensible; you can easily adopt the code to run arbitrary CLI commands.
+
 ## Why not S3 Batch Operations?
 * S3BO requires the generation of manifests, which can take up to 48 hours per bucket. The long feedback loop can make it very frustrating to work with!
 * S3BO only supports cross-region operations for the PUT operation
-* It can be very expensive ($1/1M object operations). For 1.4B files that's $1,400 for just a single operation pass
+* It can be very expensive ($1/1M object operations). For 1.4 billion files that's $1,400 for just a single operation pass, add the potential costs for Lambda invocations per object!
 * Every S3BO operation is atomic, and costs money - with CLI, you can do several things with one call (e.g. copy, change ownership and change storage class)
 
+## Why not S3 replication?
+* Requires version control enabled on all buckets
+* Always retain the metadata of objects
+* Can't perform transformation or operations on objects
+* Requires more permissions
 
 
 ## TODO
